@@ -3,6 +3,6 @@ A very simple example of a virtual CPU written in C and an "assembler" in python
 
 Instruction set:
 
-![alt text](https://i.imgur.com/0avzw1d.png "Error")
+![alt text](https://imgur.com/a/0uREJlg "Instruction set")
 
 for vcpu-asm example see fibonacci.py
