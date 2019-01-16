@@ -187,15 +187,17 @@ void jmp(int offset, uint8_t relative){
     }
 }
 
-void prnt(uint8_t reg1){
+void prnt(uint8_t reg1, uint8_t ascii){
     //print to stdout
     if(reg1 > NO_GEN_REGISTERS){
         printf("prnt register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    printf("register %u: %u\n", reg1, cpu_base->reg[reg1]);
-    if ((cpu_base->reg[reg1] > 31) && (cpu_base->reg[reg1] < 128)){
-        printf("ASCII value: %c\n", (char)(cpu_base->reg[reg1]));
+    //ascii only output
+    if(ascii && (((cpu_base->reg[reg1] > 31) && (cpu_base->reg[reg1] < 128)) || cpu_base->reg[reg1] == 10 || cpu_base->reg[reg1] == 13)){
+        printf("%c", cpu_base->reg[reg1]);
+    }else{
+        printf("register %u: %u\n", reg1, cpu_base->reg[reg1]);
     }
 }
 
@@ -213,7 +215,7 @@ void call(int offset, uint8_t relative){
     push(0);                          // save the instruction pointer
     store(0, 0);
 #ifdef DEBUG
-    printf("ip: %u\noffset: %i\n", cpu_base->ip, offset);
+    printf("call ip: %u\noffset: %i\n", cpu_base->ip, offset);
 #endif
     jmp(offset, relative);            // jump to function location --> expect ret at the end of the function
 }
@@ -396,8 +398,8 @@ void parse_instructions(){
                 jmp(offset, cpu_base->code[cpu_base->ip + 1 + sizeof(int)]);
                 break;
             case 0x08://print
-                prnt(cpu_base->code[cpu_base->ip + 1]);
-                cpu_base->ip += 2;
+                prnt(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
+                cpu_base->ip += 3;
                 break;
             case 0x09://call
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);

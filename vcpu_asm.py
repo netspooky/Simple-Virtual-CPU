@@ -33,8 +33,8 @@ class ASM:
     def jmp(self, offset, relative):
         self.filestream.write(struct.pack("<BiB", 7, offset, relative))
 
-    def prnt(self, reg1):
-        self.filestream.write(struct.pack("<2B", 8, reg1))
+    def prnt(self, reg1, ascii):
+        self.filestream.write(struct.pack("<3B", 8, reg1, ascii))
 
     def call(self, offset, relative):
         self.filestream.write(struct.pack("<BiB", 9, offset, relative))
