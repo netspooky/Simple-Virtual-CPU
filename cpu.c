@@ -22,7 +22,7 @@
 #endif
 
 // ╔════════════════════════════════════════════════════════╗
-// ║             Duchy's VCPU version 0.2 alpha             ║
+// ║             Duchy's VCPU version 0.1 beta              ║
 // ╠════════╦══════════════╦══════════════════╦═════════════╣
 // ║ OPCODE ║     ARGS     ║                  ║ INSTRUCTION ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
@@ -40,11 +40,11 @@
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
 // ║  0x06  ║  uint8_t reg ║         -        ║     POP     ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x07  ║  int offset  ║ uint8_t relative ║     JMP     ║
+// ║  0x07  ║  int offset  ║         -        ║     JMP     ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
 // ║  0x08  ║  uint8_t reg ║   uint8_t ASCII  ║    PRINT    ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x09  ║  int offset  ║ uint8_t relative ║     CALL    ║
+// ║  0x09  ║  int offset  ║         -        ║     CALL    ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
 // ║   0xA  ║       -      ║         -        ║     RET     ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
@@ -52,11 +52,11 @@
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
 // ║   0xC  ║ uint8_t reg1 ║         -        ║     TST     ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xD  ║  int offset  ║ uint8_t relative ║     JE      ║
+// ║   0xD  ║  int offset  ║         -        ║     JE      ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xE  ║  int offset  ║ uint8_t relative ║     JNEG    ║
+// ║   0xE  ║  int offset  ║         -        ║    JNEG    ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xF  ║  int offset  ║ uint8_t relative ║     JPOS    ║
+// ║   0xF  ║  int offset  ║         -        ║     JPOS    ║
 // ╚════════╩══════════════╩══════════════════╩═════════════╝
 
 typedef struct cpu_info{
@@ -145,6 +145,9 @@ void push(uint8_t reg1){
         puts("static stack size reached, quitting");
         return;
     }
+    #ifdef DEBUG
+        printf("Pushed at: %u\n", cpu_base->ip);
+    #endif
     //put a value of the register on top of the stack
     cpu_base->stack[cpu_base->sp] = cpu_base->reg[reg1];
     cpu_base->sp += 1;
@@ -164,27 +167,18 @@ void pop(uint8_t reg1){
     cpu_base->reg[reg1] = cpu_base->stack[cpu_base->sp];
 }
 
-void jmp(int offset, uint8_t relative){
+void jmp(int offset){
     // from current position of reg<ip>
 #ifdef DEBUG
-    printf("JMP from %u with offset %i\n", cpu_base->ip, offset);
+    printf("JMP from %u to offset %i\n", cpu_base->ip, offset);
 #endif
-    if(relative){
-        if((offset + cpu_base->ip < 0) || (offset + cpu_base->ip > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        cpu_base->ip += offset;
-        return;
-    }else{
-        // from start
-        if((offset < 0) || (offset > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        cpu_base->ip = offset;
+    // from start
+    if((offset < 0) || (offset > cpu_base->code_len)){
+        printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
         return;
     }
+    cpu_base->ip = offset;
+    return;
 }
 
 void prnt(uint8_t reg1, uint8_t ascii){
@@ -209,15 +203,15 @@ void hlt(){
     return;
 }
 
-void call(int offset, uint8_t relative){
+void call(int offset){
     // move the instruction pointer after the call instruction, so we can restore to after the instruction
-    store(0, cpu_base->ip + 2 + sizeof(int));
+    store(0, cpu_base->ip + 1 + sizeof(int));
     push(0);                          // save the instruction pointer
     store(0, 0);
 #ifdef DEBUG
     printf("call ip: %u\noffset: %i\n", cpu_base->ip, offset);
 #endif
-    jmp(offset, relative);            // jump to function location --> expect ret at the end of the function
+    jmp(offset);            // jump to function location --> expect ret at the end of the function
 }
 
 void ret(){
@@ -262,97 +256,50 @@ void tst(uint8_t reg1){
 
 // CONDITIONAL JUMPS
 
-void je(int offset, uint8_t relative){
-    // from current position of reg<ip>
-    if(relative){
-        if((offset + cpu_base->ip < 0) || (offset + cpu_base->ip > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        //if the flag is set
-        if(cpu_base->cpu_flag[CPU_FLAG_ZF]){
-            cpu_base->ip += offset;
-        }else{
-            cpu_base->ip += 2 + sizeof(int);
-        }
-        return;
-    }else{
-        // from start
-        if((offset < 0) || (offset > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        //if the flag is set
-        if(cpu_base->cpu_flag[CPU_FLAG_ZF]){
-            cpu_base->ip = offset;
-        }else{
-            cpu_base->ip += 2 + sizeof(int);
-        }
+void je(int offset){
+    // from start
+    if((offset < 0) || (offset > cpu_base->code_len)){
+        printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
         return;
     }
+    //if the flag is set
+    if(cpu_base->cpu_flag[CPU_FLAG_ZF]){
+        cpu_base->ip = offset;
+    }else{
+        cpu_base->ip += 1 + sizeof(int);
+    }
+    return;
 }
 
-void jneg(int offset, uint8_t relative){
+void jneg(int offset){
     // same as above, but with a different flag
-    // from current position of reg<ip>
-    if(relative){
-        if((offset + cpu_base->ip < 0) || (offset + cpu_base->ip > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        if(cpu_base->cpu_flag[CPU_FLAG_SF]){
-            cpu_base->ip += offset;
-        }else{
-            cpu_base->ip += 2 + sizeof(int);
-        }
-        return;
-    }else{
-        // from start
-        if((offset < 0) || (offset > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        if(cpu_base->cpu_flag[CPU_FLAG_SF]){
-            cpu_base->ip = offset;
-        }else{
-            cpu_base->ip += 2 + sizeof(int);
-        }
+    // from start
+    if((offset < 0) || (offset > cpu_base->code_len)){
+        printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
         return;
     }
+    if(cpu_base->cpu_flag[CPU_FLAG_SF]){
+        cpu_base->ip = offset;
+    }else{
+        cpu_base->ip += 1 + sizeof(int);
+    }
+    return;
 }
 
-void prnt_cpu_state(){
-    printf("\
-            ");
-}
 
-void jpos(int offset, uint8_t relative){
+void jpos(int offset){
     // same as above, but with a different flag
-    // from current position of reg<ip>
-    if(relative){
-        if((offset + cpu_base->ip < 0) || (offset + cpu_base->ip > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        if(!cpu_base->cpu_flag[CPU_FLAG_SF]){
-            cpu_base->ip += offset;
-        }else{
-            cpu_base->ip += 2 + sizeof(int);
-        }
-        return;
-    }else{
-        // from start
-        if((offset < 0) || (offset > cpu_base->code_len)){
-            printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
-            return;
-        }
-        if(!cpu_base->cpu_flag[CPU_FLAG_SF]){
-            cpu_base->ip = offset;
-        }else{
-            cpu_base->ip += 2 + sizeof(int);
-        }
+    // from start
+    if((offset < 0) || (offset > cpu_base->code_len)){
+        printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
         return;
     }
+    if(!cpu_base->cpu_flag[CPU_FLAG_SF]){
+        cpu_base->ip = offset;
+    }else{
+        cpu_base->ip += 1 + sizeof(int);
+    }
+    return;
 }
 
 
@@ -363,6 +310,7 @@ void parse_instructions(){
         unsigned char instruction = cpu_base->code[cpu_base->ip];
 #ifdef DEBUG
         printf("Check for instruction at: %u\n", cpu_base->ip);
+        printf("sp:%u\n", cpu_base->sp);
 #endif
         switch (instruction) {
             case 0x00://halt
@@ -395,7 +343,7 @@ void parse_instructions(){
                 break;
             case 0x07://jump
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
-                jmp(offset, cpu_base->code[cpu_base->ip + 1 + sizeof(int)]);
+                jmp(offset);
                 break;
             case 0x08://print
                 prnt(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
@@ -403,7 +351,7 @@ void parse_instructions(){
                 break;
             case 0x09://call
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
-                call(offset, cpu_base->code[cpu_base->ip + 1 + sizeof(int)]);
+                call(offset);
                 break;
             case 0xA://ret
                 ret();
@@ -418,15 +366,15 @@ void parse_instructions(){
                 break;
             case 0xD://jump equal
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
-                je(offset, cpu_base->code[cpu_base->ip + 1 + sizeof(int)]);
+                je(offset);
                 break;
             case 0xE://jump negative
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
-                jneg(offset, cpu_base->code[cpu_base->ip + 1 + sizeof(int)]);
+                jneg(offset);
                 break;
             case 0xF://jump positive
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
-                jpos(offset, cpu_base->code[cpu_base->ip + 1 + sizeof(int)]);
+                jpos(offset);
                 break;
             default:
                 printf("invalid instruction!\nip: %u", cpu_base->ip);

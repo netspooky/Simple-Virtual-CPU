@@ -1,0 +1,46 @@
+--BEGIN ASM--
+store: 0, 72
+prnt: 0, 1
+store: 0, 69
+prnt: 0, 1
+store: 0, 76
+prnt: 0, 1
+store: 0, 76
+prnt: 0, 1
+store: 0, 79
+prnt: 0, 1
+store: 0, 10
+prnt: 0, 1
+call: init
+store: 0, 87
+prnt: 0, 1
+store: 0, 79
+prnt: 0, 1
+store: 0, 82
+prnt: 0, 1
+store: 0, 76
+prnt: 0, 1
+store: 0, 68
+prnt: 0, 1
+store: 0, 10
+prnt: 0, 1
+hlt
+
+
+label: init
+store: 0, 0
+prnt: 0, 0
+store: 1, 1
+prnt: 1, 0
+
+label: loop
+mov: 2, 0
+add: 2, 1
+prnt: 2, 0
+mov: 0, 1
+mov: 1, 2
+tst: 2
+jpos: loop
+store: 0, 1
+push: 0
+ret
