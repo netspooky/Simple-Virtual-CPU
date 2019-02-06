@@ -191,7 +191,7 @@ void prnt(uint8_t reg1, uint8_t ascii){
     if(ascii && (((cpu_base->reg[reg1] > 31) && (cpu_base->reg[reg1] < 128)) || cpu_base->reg[reg1] == 10 || cpu_base->reg[reg1] == 13)){
         printf("%c", cpu_base->reg[reg1]);
     }else{
-        printf("register %u: %u\n", reg1, cpu_base->reg[reg1]);
+        printf("register %u: %i\n", reg1, cpu_base->reg[reg1]);
     }
 }
 
