@@ -54,7 +54,7 @@
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
 // ║   0xD  ║  int offset  ║         -        ║     JE      ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xE  ║  int offset  ║         -        ║    JNEG    ║
+// ║   0xE  ║  int offset  ║         -        ║     JNEG    ║
 // ╠════════╬══════════════╬══════════════════╬═════════════╣
 // ║   0xF  ║  int offset  ║         -        ║     JPOS    ║
 // ╚════════╩══════════════╩══════════════════╩═════════════╝
@@ -384,7 +384,7 @@ void parse_instructions(){
 }
 
 
-void init_cpu(unsigned int i_ptr, void * code_ptr, uint32_t code_len){
+void init_cpu(void * code_ptr, uint32_t code_len){
     // alloc the cpu
     cpu_base = (cpu_info *)calloc(1, sizeof(cpu_info));
     cpu_base->code = code_ptr;
@@ -411,7 +411,7 @@ int main(int argc, char ** argv){
     unsigned char * code_data = mmap(0, code_len, PROT_READ, MAP_SHARED, fd, 0);
     printf("code length: %u\n", code_len);
     // the entrypoint can be set by jumping there in the beginning of the binary
-    init_cpu(0, code_data, code_len);
+    init_cpu(code_data, code_len);
     parse_instructions();
     munmap(code_data, code_len);
     fclose(code);
