@@ -26,17 +26,13 @@ store: 0, 10
 prnt: 0, 1
 hlt
 
-
 label: init
 store: 0, 0
-prnt: 0, 0
 store: 1, 1
-prnt: 1, 0
-
 label: loop
 mov: 2, 0
-add: 2, 1
 prnt: 2, 0
+add: 2, 1
 mov: 0, 1
 mov: 1, 2
 tst: 2
