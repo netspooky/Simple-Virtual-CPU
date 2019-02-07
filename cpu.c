@@ -302,6 +302,26 @@ void jpos(int offset){
     return;
 }
 
+void addi(uint8_t reg1, int value){
+    if(reg1 > NO_GEN_REGISTERS){
+        printf("add register invalid\nip: %u\n", cpu_base->ip);
+        return;
+    }
+    //set the CPU flags
+    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_overflow(cpu_base->reg[reg1], value);
+    if (cpu_base->reg[reg1] + value < 0){
+        cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
+    }else{
+        cpu_base->cpu_flag[CPU_FLAG_SF] = 0;
+    }
+    if (cpu_base->reg[reg1] + value == 0){
+        cpu_base->cpu_flag[CPU_FLAG_ZF] = 1;
+    }else{
+        cpu_base->cpu_flag[CPU_FLAG_ZF] = 0;
+    }
+    //... addition ...
+    cpu_base->reg[reg1] = (cpu_base->reg[reg1] + value);
+}
 
 void parse_instructions(){
     int offset;
@@ -375,6 +395,11 @@ void parse_instructions(){
             case 0xF://jump positive
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
                 jpos(offset);
+                break;
+            case 0x10:// add intieger
+                offset = *(int*)(cpu_base->code + cpu_base->ip + 2);
+                addi(cpu_base->code[cpu_base->ip + 1], offset);
+                cpu_base->ip += 6;
                 break;
             default:
                 printf("invalid instruction!\nip: %u", cpu_base->ip);

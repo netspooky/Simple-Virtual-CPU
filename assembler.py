@@ -53,6 +53,10 @@ def init_size_and_labels(file_parsed):
         elif opcode == "jpos":
             length += 1 + 4  # 1 byte for opcode
             #                + 4 bytes for offset
+        elif opcode == "addi":
+            length += 1 + 1 + 4 # 1 byte opcode
+            #                   + 1 byte of register number
+            #                   + 4 bytes for value
         elif opcode == "label":
             label_addresses[x[1][0]] = length
     return label_addresses
@@ -111,6 +115,8 @@ def write_opcodes(file_parsed, filename, label_addresses):
                 filestream.write(struct.pack("<Bi", 15, label_addresses[x[1][0]]))
             else:
                 filestream.write(struct.pack("<Bi", 15, int(x[1][0])))
+        elif opcode == "addi":
+            filestream.write(struct.pack("<2Bi", 16, int(x[1][0]), int(x[1][1])))
         elif opcode == "label":
             pass
     filestream.close()
