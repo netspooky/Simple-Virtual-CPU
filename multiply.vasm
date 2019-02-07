@@ -2,9 +2,8 @@
 store: 0, -55  : -55
 store: 1, 0
 store: 2, 25   : times 26
-store: 3, -1
 label: top
 add: 1, 0
-add: 2, 3
+addi: 2, -1
 jpos: top
 prnt: 1,0      : = -1430
