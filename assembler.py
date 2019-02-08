@@ -117,6 +117,10 @@ def write_opcodes(file_parsed, filename, label_addresses):
                 filestream.write(struct.pack("<Bi", 15, int(x[1][0])))
         elif opcode == "addi":
             filestream.write(struct.pack("<2Bi", 16, int(x[1][0]), int(x[1][1])))
+        elif opcode == "mul":
+            filestream.write(struct.pack("<3B", 17, int(x[1][0]), int(x[1][1])))
+        elif opcode == "muli":
+            filestream.write(struct.pack("<2Bi", 18, int(x[1][0]), int(x[1][1])))
         elif opcode == "label":
             pass
     filestream.close()
@@ -124,7 +128,7 @@ def write_opcodes(file_parsed, filename, label_addresses):
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         usage()
-
+        
     file_parsed = []
 
     with open(sys.argv[1], "r") as f:

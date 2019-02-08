@@ -21,44 +21,6 @@
     #warning "Not enough general registers, the cpu may not work properly with some programs."
 #endif
 
-// ╔════════════════════════════════════════════════════════╗
-// ║             Duchy's VCPU version 0.1 beta              ║
-// ╠════════╦══════════════╦══════════════════╦═════════════╣
-// ║ OPCODE ║     ARGS     ║                  ║ INSTRUCTION ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x00  ║       -      ║         -        ║     HLT     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x01  ║ uint8_t reg1 ║   uint8_t reg2   ║     MOV     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x02  ║ uint8_t reg1 ║   uint8_t reg2   ║     XOR     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x03  ║ uint8_t reg1 ║   uint8_t reg2   ║     ADD     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x04  ║  uint8_t reg ║     int value    ║    STORE    ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x05  ║  uint8_t reg ║         -        ║     PUSH    ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x06  ║  uint8_t reg ║         -        ║     POP     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x07  ║  int offset  ║         -        ║     JMP     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x08  ║  uint8_t reg ║   uint8_t ASCII  ║    PRINT    ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║  0x09  ║  int offset  ║         -        ║     CALL    ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xA  ║       -      ║         -        ║     RET     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xB  ║ uint8_t reg1 ║   uint8_t reg2   ║     CMP     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xC  ║ uint8_t reg1 ║         -        ║     TST     ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xD  ║  int offset  ║         -        ║     JE      ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xE  ║  int offset  ║         -        ║     JNEG    ║
-// ╠════════╬══════════════╬══════════════════╬═════════════╣
-// ║   0xF  ║  int offset  ║         -        ║     JPOS    ║
-// ╚════════╩══════════════╩══════════════════╩═════════════╝
-
 typedef struct cpu_info{
     unsigned char * code;
     uint32_t code_len;
@@ -72,8 +34,17 @@ typedef struct cpu_info{
 
 cpu_info *cpu_base;
 
-uint8_t __check_overflow(int x, int y){
+uint8_t __check_addition_overflow(int x, int y){
     if ((y > 0 && x > INT_MAX - y) || (y < 0 && x < INT_MIN - y)){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+uint8_t __check_multiply_overflow(int a, int b){
+    int x = a * b;
+    if (a != 0 && x / a != b) {
         return 1;
     }else{
         return 0;
@@ -109,7 +80,7 @@ void add(uint8_t reg1, uint8_t reg2){
         return;
     }
     //set the CPU flags
-    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_overflow(cpu_base->reg[reg1], cpu_base->reg[reg2]);
+    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_addition_overflow(cpu_base->reg[reg1], cpu_base->reg[reg2]);
     if ((cpu_base->reg[reg1] + cpu_base->reg[reg2]) < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
     }else{
@@ -224,7 +195,7 @@ void ret(){
 void cmp(uint8_t reg1, uint8_t reg2){
     // set the CPU flags
     // overflow flag --> INT_MAX + 1 = INT_MIN
-    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_overflow(cpu_base->reg[reg1], cpu_base->reg[reg2]);
+    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_addition_overflow(cpu_base->reg[reg1], cpu_base->reg[reg2]);
     // signed flag --> x-y < 0
     if ((cpu_base->reg[reg1] - cpu_base->reg[reg2]) < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
@@ -308,7 +279,7 @@ void addi(uint8_t reg1, int value){
         return;
     }
     //set the CPU flags
-    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_overflow(cpu_base->reg[reg1], value);
+    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_addition_overflow(cpu_base->reg[reg1], value);
     if (cpu_base->reg[reg1] + value < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
     }else{
@@ -321,6 +292,48 @@ void addi(uint8_t reg1, int value){
     }
     //... addition ...
     cpu_base->reg[reg1] = (cpu_base->reg[reg1] + value);
+}
+
+void mul(uint8_t reg1, uint8_t reg2){
+    if(reg1 > NO_GEN_REGISTERS || reg2 > NO_GEN_REGISTERS){
+        printf("add register invalid\nip: %u\n", cpu_base->ip);
+        return;
+    }
+    //set the CPU flags
+    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_multiply_overflow(cpu_base->reg[reg1], cpu_base->reg[reg2]);
+    if ((cpu_base->reg[reg1] * cpu_base->reg[reg2]) < 0){
+        cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
+    }else{
+        cpu_base->cpu_flag[CPU_FLAG_SF] = 0;
+    }
+    if ((cpu_base->reg[reg1] * cpu_base->reg[reg2]) == 0){
+        cpu_base->cpu_flag[CPU_FLAG_ZF] = 1;
+    }else{
+        cpu_base->cpu_flag[CPU_FLAG_ZF] = 0;
+    }
+    //... multiplication ...
+    cpu_base->reg[reg1] = (cpu_base->reg[reg1] * cpu_base->reg[reg2]);
+}
+
+void muli(uint8_t reg1, int value){
+    if(reg1 > NO_GEN_REGISTERS){
+        printf("add register invalid\nip: %u\n", cpu_base->ip);
+        return;
+    }
+    //set the CPU flags
+    cpu_base->cpu_flag[CPU_FLAG_OF] = __check_multiply_overflow(cpu_base->reg[reg1], value);
+    if ((cpu_base->reg[reg1] * value) < 0){
+        cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
+    }else{
+        cpu_base->cpu_flag[CPU_FLAG_SF] = 0;
+    }
+    if ((cpu_base->reg[reg1] * value) == 0){
+        cpu_base->cpu_flag[CPU_FLAG_ZF] = 1;
+    }else{
+        cpu_base->cpu_flag[CPU_FLAG_ZF] = 0;
+    }
+    //... multiplication ...
+    cpu_base->reg[reg1] = (cpu_base->reg[reg1] * value);
 }
 
 void parse_instructions(){
@@ -399,6 +412,15 @@ void parse_instructions(){
             case 0x10:// add intieger
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 2);
                 addi(cpu_base->code[cpu_base->ip + 1], offset);
+                cpu_base->ip += 6;
+                break;
+            case 0x11:// multiply registers
+                mul(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
+                cpu_base->ip += 3;
+                break;
+            case 0x12:// multiply by number
+                offset = *(int*)(cpu_base->code + cpu_base->ip + 2);
+                muli(cpu_base->code[cpu_base->ip + 1], offset);
                 cpu_base->ip += 6;
                 break;
             default:

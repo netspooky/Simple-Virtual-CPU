@@ -1,9 +1,5 @@
 --BEGIN ASM--
 store: 0, -55  : -55
-store: 1, 0
-store: 2, 25   : times 26
-label: top
-add: 1, 0
-addi: 2, -1
-jpos: top
-prnt: 1,0      : = -1430
+muli: 0, -1
+prnt: 0, 0
+hlt
