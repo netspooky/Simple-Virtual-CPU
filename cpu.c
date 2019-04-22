@@ -8,9 +8,8 @@
 
 // #define ARRAY_SIZE(x) ((sizeof x) / (sizeof *x))
 // #define DEBUG
-//config
+
 #define STACK_SIZE 4096
-#define HEAP_MAX_SIZE 8192
 #define NO_GEN_REGISTERS 8
 #define CPU_FLAG_ZF 0
 #define CPU_FLAG_SF 1
@@ -65,7 +64,7 @@ void _xor(uint8_t reg1, uint8_t reg2){
         printf("xor register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    //eXclusive OR
+    // eXclusive OR
     //  a  |  b
     //  1  |  1  -->  0
     //  1  |  0  -->  1
@@ -79,7 +78,7 @@ void add(uint8_t reg1, uint8_t reg2){
         printf("add register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    //set the CPU flags
+    // set the CPU flags
     cpu_base->cpu_flag[CPU_FLAG_OF] = __check_addition_overflow(cpu_base->reg[reg1], cpu_base->reg[reg2]);
     if ((cpu_base->reg[reg1] + cpu_base->reg[reg2]) < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
@@ -91,7 +90,7 @@ void add(uint8_t reg1, uint8_t reg2){
     }else{
         cpu_base->cpu_flag[CPU_FLAG_ZF] = 0;
     }
-    //... addition ...
+    // ... addition ...
     cpu_base->reg[reg1] = (cpu_base->reg[reg1] + cpu_base->reg[reg2]);
 }
 
@@ -103,7 +102,7 @@ void store(uint8_t reg1, int value){
 #ifdef DEBUG
     printf("Stored at: %u\n", cpu_base->ip);
 #endif
-    //does this really need an explanation?!
+    // does this really need an explanation?!
     cpu_base->reg[reg1] = value;
 }
 
@@ -119,7 +118,7 @@ void push(uint8_t reg1){
     #ifdef DEBUG
         printf("Pushed at: %u\n", cpu_base->ip);
     #endif
-    //put a value of the register on top of the stack
+    // put a value of the register on top of the stack
     cpu_base->stack[cpu_base->sp] = cpu_base->reg[reg1];
     cpu_base->sp += 1;
 }
@@ -129,7 +128,7 @@ void pop(uint8_t reg1){
         printf("pop register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    //load the top value from the stack to a register and lower the stack pointer --> the value can be overwritten
+    // load the top value from the stack to a register and lower the stack pointer --> the value can be overwritten
     if(cpu_base->sp == 0){
         printf("can't pop, because sp is 0\nip: %u\n", cpu_base->ip);
         return;
@@ -153,12 +152,12 @@ void jmp(int offset){
 }
 
 void prnt(uint8_t reg1, uint8_t ascii){
-    //print to stdout
+    // print to stdout
     if(reg1 > NO_GEN_REGISTERS){
         printf("prnt register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    //ascii only output
+    // ascii only output
     if(ascii && (((cpu_base->reg[reg1] > 31) && (cpu_base->reg[reg1] < 128)) || cpu_base->reg[reg1] == 10 || cpu_base->reg[reg1] == 13)){
         printf("%c", cpu_base->reg[reg1]);
     }else{
@@ -211,7 +210,7 @@ void cmp(uint8_t reg1, uint8_t reg2){
 }
 
 void tst(uint8_t reg1){
-    //same as cmp, but just for a single reg
+    // same as cmp, but just for a single reg
     cpu_base->cpu_flag[CPU_FLAG_OF] = 0;
     if ((cpu_base->reg[reg1]) < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
@@ -233,7 +232,7 @@ void je(int offset){
         printf("invalid jmp offset\nip: %u\n", cpu_base->ip);
         return;
     }
-    //if the flag is set
+    // if the flag is set
     if(cpu_base->cpu_flag[CPU_FLAG_ZF]){
         cpu_base->ip = offset;
     }else{
@@ -278,7 +277,7 @@ void addi(uint8_t reg1, int value){
         printf("add register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    //set the CPU flags
+    // set the CPU flags
     cpu_base->cpu_flag[CPU_FLAG_OF] = __check_addition_overflow(cpu_base->reg[reg1], value);
     if (cpu_base->reg[reg1] + value < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
@@ -290,7 +289,7 @@ void addi(uint8_t reg1, int value){
     }else{
         cpu_base->cpu_flag[CPU_FLAG_ZF] = 0;
     }
-    //... addition ...
+    // ... addition ...
     cpu_base->reg[reg1] = (cpu_base->reg[reg1] + value);
 }
 
@@ -299,7 +298,7 @@ void mul(uint8_t reg1, uint8_t reg2){
         printf("add register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    //set the CPU flags
+    // set the CPU flags
     cpu_base->cpu_flag[CPU_FLAG_OF] = __check_multiply_overflow(cpu_base->reg[reg1], cpu_base->reg[reg2]);
     if ((cpu_base->reg[reg1] * cpu_base->reg[reg2]) < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
@@ -311,7 +310,7 @@ void mul(uint8_t reg1, uint8_t reg2){
     }else{
         cpu_base->cpu_flag[CPU_FLAG_ZF] = 0;
     }
-    //... multiplication ...
+    // ... multiplication ...
     cpu_base->reg[reg1] = (cpu_base->reg[reg1] * cpu_base->reg[reg2]);
 }
 
@@ -320,7 +319,7 @@ void muli(uint8_t reg1, int value){
         printf("add register invalid\nip: %u\n", cpu_base->ip);
         return;
     }
-    //set the CPU flags
+    // set the CPU flags
     cpu_base->cpu_flag[CPU_FLAG_OF] = __check_multiply_overflow(cpu_base->reg[reg1], value);
     if ((cpu_base->reg[reg1] * value) < 0){
         cpu_base->cpu_flag[CPU_FLAG_SF] = 1;
@@ -332,7 +331,7 @@ void muli(uint8_t reg1, int value){
     }else{
         cpu_base->cpu_flag[CPU_FLAG_ZF] = 0;
     }
-    //... multiplication ...
+    // ... multiplication ...
     cpu_base->reg[reg1] = (cpu_base->reg[reg1] * value);
 }
 
@@ -346,66 +345,66 @@ void parse_instructions(){
         printf("sp:%u\n", cpu_base->sp);
 #endif
         switch (instruction) {
-            case 0x00://halt
+            case 0x00:// halt
                 hlt();
                 break;
-            case 0x01://mov
+            case 0x01:// mov
                 mov(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
                 cpu_base->ip += 3;
                 break;
-            case 0x02://xor
+            case 0x02:// xor
                 _xor(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
                 cpu_base->ip += 3;
                 break;
-            case 0x03://add
+            case 0x03:// add
                 add(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
                 cpu_base->ip += 3;
                 break;
-            case 0x04://store
+            case 0x04:// store
                 number = *(int*)(cpu_base->code + cpu_base->ip + 2);
                 store(cpu_base->code[cpu_base->ip + 1], number);
                 cpu_base->ip += 2 + sizeof(int);
                 break;
-            case 0x05://push
+            case 0x05:// push
                 push(cpu_base->code[cpu_base->ip + 1]);
                 cpu_base->ip += 2;
                 break;
-            case 0x06://pop
+            case 0x06:// pop
                 pop(cpu_base->code[cpu_base->ip + 1]);
                 cpu_base->ip += 2;
                 break;
-            case 0x07://jump
+            case 0x07:// jump
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
                 jmp(offset);
                 break;
-            case 0x08://print
+            case 0x08:// print
                 prnt(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
                 cpu_base->ip += 3;
                 break;
-            case 0x09://call
+            case 0x09:// call
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
                 call(offset);
                 break;
-            case 0xA://ret
+            case 0xA:// ret
                 ret();
                 break;
-            case 0xB://compare
+            case 0xB:// compare
                 cmp(cpu_base->code[cpu_base->ip + 1], cpu_base->code[cpu_base->ip + 2]);
                 cpu_base->ip += 3;
                 break;
-            case 0xC://test
+            case 0xC:// test
                 tst(cpu_base->code[cpu_base->ip + 1]);
                 cpu_base->ip += 2;
                 break;
-            case 0xD://jump equal
+            case 0xD:// jump equal
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
                 je(offset);
                 break;
-            case 0xE://jump negative
+            case 0xE:// jump negative
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
                 jneg(offset);
                 break;
-            case 0xF://jump positive
+            case 0xF:// jump positive
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
                 jpos(offset);
                 break;
