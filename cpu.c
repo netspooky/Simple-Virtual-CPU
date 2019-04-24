@@ -337,7 +337,6 @@ void muli(uint8_t reg1, int value){
 
 void parse_instructions(){
     int offset;
-    int number;
     while(cpu_base->hlt == 0){
         unsigned char instruction = cpu_base->code[cpu_base->ip];
 #ifdef DEBUG
@@ -361,8 +360,8 @@ void parse_instructions(){
                 cpu_base->ip += 3;
                 break;
             case 0x04:// store
-                number = *(int*)(cpu_base->code + cpu_base->ip + 2);
-                store(cpu_base->code[cpu_base->ip + 1], number);
+                offset = *(int*)(cpu_base->code + cpu_base->ip + 2);
+                store(cpu_base->code[cpu_base->ip + 1], offset);
                 cpu_base->ip += 2 + sizeof(int);
                 break;
             case 0x05:// push
@@ -408,7 +407,7 @@ void parse_instructions(){
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 1);
                 jpos(offset);
                 break;
-            case 0x10:// add intieger
+            case 0x10:// add integer
                 offset = *(int*)(cpu_base->code + cpu_base->ip + 2);
                 addi(cpu_base->code[cpu_base->ip + 1], offset);
                 cpu_base->ip += 6;

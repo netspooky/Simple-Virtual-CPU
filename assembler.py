@@ -128,12 +128,12 @@ def write_opcodes(file_parsed, filename, label_addresses):
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         usage()
-        
+
     file_parsed = []
 
     with open(sys.argv[1], "r") as f:
-        if f.read(14) != "--BEGIN ASM--\n":
-            sys.exit("Missing --BEGIN ASM-- header")
+        if f.read(15) != "--BEGIN VASM--\n":
+            sys.exit("Missing --BEGIN VASM-- header")
         file = f.read().strip().replace(" ", "").replace("\t", "").split("\n")
 
         for x in file:

@@ -1,4 +1,4 @@
---BEGIN ASM--
+--BEGIN VASM--
 store: 0, -55  : -55
 muli: 0, -1
 prnt: 0, 0

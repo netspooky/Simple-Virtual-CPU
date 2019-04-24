@@ -1,4 +1,4 @@
---BEGIN ASM--
+--BEGIN VASM--
 store: 0, 72
 prnt: 0, 1
 store: 0, 69
